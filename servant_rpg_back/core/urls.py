@@ -6,5 +6,5 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # Apps
-    path('servant_rpg/', include("apps.servant_rpg.urls")),
+    path('servant_rpg_back/', include("apps.servant_rpg_back.urls")),
 ]

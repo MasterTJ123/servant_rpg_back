@@ -4,7 +4,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
 
 SECRET_KEY = 'django-insecure-=da!m=!83*f^lj^%&nc8a(ohwynyiu$jrts+%apjl1m2pht)=*'
 
@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     # Apps
-    'apps.servant_rpg',
+    'apps.servant_rpg_back',
 ]
 
 MIDDLEWARE = [
@@ -84,7 +84,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'apps.servant_rpg.backends.CustomAuthBackend',
+    'apps.servant_rpg_back.backends.CustomAuthBackend',
 ]
 
 LANGUAGE_CODE = 'pt-br'
@@ -101,7 +101,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'servant_rpg.Usuario'
+AUTH_USER_MODEL = 'servant_rpg_back.Usuario'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
