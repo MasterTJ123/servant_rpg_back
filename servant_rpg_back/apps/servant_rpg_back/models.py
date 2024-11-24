@@ -1,16 +1,18 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
-
+from django.contrib.auth.hashers import make_password
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, email, nome, senha):
         if not email:
             raise ValueError('O email deve ser fornecido!')
         if not senha:
+            raise ValueError('O nome deve ser fornecido!')
+        if not senha:
             raise ValueError('A senha deve ser fornecida!')
         email = self.normalize_email(email)
         user = self.model(email=email, nome=nome)
-        user.set_password(senha)
+        user.senha = make_password(senha)
         user.save(using=self._db)
         return user
 

@@ -1,13 +1,48 @@
-from rest_framework import status
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from .models import Usuario
+from rest_framework.decorators import authentication_classes
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import Usuario
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
+def obter_token(request):
+    email = request.data.get('email')
+    senha = request.data.get('senha')
+
+    if not email or not senha:
+        return Response(
+            {"erro": "Os campos 'email' e 'senha' são obrigatórios!"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user = authenticate(request=request, email=email, senha=senha)
+    if user is None:
+        return Response(
+            {"erro": "Credenciais inválidas ou usuário inexistente!"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+    refresh = RefreshToken.for_user(user)
+    access = str(refresh.access_token)
+
+    return Response({
+        "refresh": str(refresh),
+        "access": str(access),
+        "nome": user.nome,
+        "email": user.email
+    })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def cadastrar_usuario(request):
     try:
         email = request.data.get('email')
@@ -24,7 +59,7 @@ def cadastrar_usuario(request):
 
         return Response(
             {"mensagem": "Usuário criado com sucesso!"},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_200_OK
         )
     except ValidationError as e:
         return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -75,8 +110,18 @@ def atualizar_usuario(request):
 
         usuario.save()
 
+        # Gerar novo token JWT
+        refresh = RefreshToken.for_user(usuario)
+        novo_token = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token)
+        }
+
         return Response(
-            {"mensagem": "Usuário atualizado com sucesso!"},
+            {
+                "mensagem": "Usuário atualizado com sucesso!",
+                "novo_token": novo_token
+            },
             status=status.HTTP_200_OK
         )
     except Exception as e:
@@ -84,6 +129,7 @@ def atualizar_usuario(request):
             {"erro": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
 
 
 @api_view(['DELETE'])
@@ -96,7 +142,7 @@ def deletar_usuario(request):
 
         return Response(
             {"mensagem": "Usuário deletado com sucesso!"},
-            status=status.HTTP_204_NO_CONTENT
+            status=status.HTTP_200_OK
         )
     except Exception as e:
         return Response(
