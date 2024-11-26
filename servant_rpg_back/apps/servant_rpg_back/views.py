@@ -1,44 +1,50 @@
+from .erros import CampoAusente, EmailJaCadastrado, CredenciaisInvalidas
 from .models import Usuario
-from rest_framework.decorators import authentication_classes
-from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
 from django.contrib.auth import authenticate
+from django.db import OperationalError, IntegrityError
+from rest_framework import status
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def obter_token(request):
-    email = request.data.get('email')
-    senha = request.data.get('senha')
+    try:
+        email = request.data.get('email')
+        senha = request.data.get('senha')
 
-    if not email or not senha:
-        return Response(
-            {"erro": "Os campos 'email' e 'senha' são obrigatórios!"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        # Verifica se todos os campos estão presentes
+        if not email or not senha:
+            raise CampoAusente("Erro! Todos os campos são obrigatórios!")
 
-    user = authenticate(request=request, email=email, senha=senha)
-    if user is None:
-        return Response(
-            {"erro": "Credenciais inválidas ou usuário inexistente!"},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
+        user = authenticate(request=request, email=email, senha=senha)
 
-    refresh = RefreshToken.for_user(user)
-    access = str(refresh.access_token)
+        # Verifica se as credenciais estão corretas e se o usuário existe
+        if user is None:
+            raise CredenciaisInvalidas("Erro! Credenciais inválidas ou usuário inexistente!")
 
-    return Response({
-        "refresh": str(refresh),
-        "access": str(access),
-        "nome": user.nome,
-        "email": user.email
-    })
+        refresh = RefreshToken.for_user(user)
+        access = str(refresh.access_token)
+
+        return Response({
+            "refresh": str(refresh),
+            "access": str(access),
+            "nome": user.nome,
+            "email": user.email
+        }, status=status.HTTP_200_OK)
+    except CampoAusente as e:
+        return Response({"erro": e.mensagem}, status=status.HTTP_400_BAD_REQUEST)
+    except CredenciaisInvalidas as e:
+        return Response({"erro": e.mensagem}, status=status.HTTP_401_UNAUTHORIZED)
+    except OperationalError:
+        return Response({"erro": "Erro! Não foi possível acessar o banco de dados!"},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except Exception as e:
+        return Response({"erro": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -49,20 +55,20 @@ def cadastrar_usuario(request):
         nome = request.data.get('nome')
         senha = request.data.get('senha')
 
-        if not email or not nome or not senha:
-            return Response(
-                {"erro": "Campos 'email', 'nome' e 'senha' são obrigatórios!"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         Usuario.objects.create_user(email=email, nome=nome, senha=senha)
 
         return Response(
             {"mensagem": "Usuário criado com sucesso!"},
             status=status.HTTP_200_OK
         )
-    except ValidationError as e:
-        return Response({"erro": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except (CampoAusente, EmailJaCadastrado) as e:
+        return Response({"erro": e.mensagem}, status=status.HTTP_400_BAD_REQUEST)
+    except OperationalError:
+        return Response({"erro": "Erro! Não foi possível acessar o banco de dados!"},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    except IntegrityError:
+        return Response({"erro": "Erro! Integridade inválida do banco de dados!"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         return Response({"erro": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -129,7 +135,6 @@ def atualizar_usuario(request):
             {"erro": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
 
 
 @api_view(['DELETE'])

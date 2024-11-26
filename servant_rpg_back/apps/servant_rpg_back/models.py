@@ -1,15 +1,22 @@
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.db import models
 from django.contrib.auth.hashers import make_password
+from .erros import CampoAusente, EmailJaCadastrado
+
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, email, nome, senha):
-        if not email:
-            raise ValueError('O email deve ser fornecido!')
-        if not senha:
-            raise ValueError('O nome deve ser fornecido!')
-        if not senha:
-            raise ValueError('A senha deve ser fornecida!')
+        # Verifica se todos os campos estão presentes
+        if not email or not nome or not senha:
+            raise CampoAusente("Erro! Todos os campos são obrigatórios!")
+        # Verifica se o e-mail já existe
+        try:
+            Usuario.objects.get(email=email)
+            raise EmailJaCadastrado("Erro! O e-mail já está cadastrado!")
+        except Usuario.DoesNotExist:
+            pass
+        # TODO VERIFICAR SE A FORMATAÇÃO DO E-MAIL ESTÁ CORRETA
+        # Cria o usuário
         email = self.normalize_email(email)
         user = self.model(email=email, nome=nome)
         user.senha = make_password(senha)
