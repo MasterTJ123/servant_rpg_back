@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
 
-SECRET_KEY = 'django-insecure-=da!m=!83*f^lj^%&nc8a(ohwynyiu$jrts+%apjl1m2pht)=*'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = True
 
@@ -74,7 +74,8 @@ DATABASES = {
         'HOST': os.getenv('HOST'),
         'PORT': os.getenv('PORT'),
         'OPTIONS': {
-            'sslmode': 'require',
+            'sslmode': 'verify-full',
+            'sslrootcert': os.getenv('DB_CERTIFICADO'),
         },
     }
 }
@@ -130,9 +131,7 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(', ')
 
 CORS_ALLOW_CREDENTIALS = True
 

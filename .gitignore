@@ -9,3 +9,7 @@
 
 # Env
 **.env
+
+# Certificados
+**/certificados/*
+!**/certificados/.gitkeep
