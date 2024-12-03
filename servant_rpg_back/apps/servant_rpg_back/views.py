@@ -1,18 +1,22 @@
 from .erros import CampoAusente, EmailJaCadastrado, CredenciaisInvalidas
 from .models import Usuario
-from django.contrib.auth import authenticate
 from django.db import OperationalError, IntegrityError
+from django.contrib.auth import authenticate
+from django.conf import settings
+from django.core.exceptions import ValidationError
 from rest_framework import status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from apps.servant_rpg_back.backends import JWTCookieAuthentication, NoAuthentication
 
 
 @api_view(['POST'])
+@authentication_classes([NoAuthentication])
 @permission_classes([AllowAny])
-def obter_token(request):
+def access_token(request):
     try:
         email = request.data.get('email')
         senha = request.data.get('senha')
@@ -27,15 +31,39 @@ def obter_token(request):
         if user is None:
             raise CredenciaisInvalidas("Erro! Credenciais inválidas ou usuário inexistente!")
 
-        refresh = RefreshToken.for_user(user)
-        access = str(refresh.access_token)
-
-        return Response({
-            "refresh": str(refresh),
-            "access": str(access),
+        # Resposta
+        response = Response({
             "nome": user.nome,
             "email": user.email
         }, status=status.HTTP_200_OK)
+
+        # Cookies
+        refresh_aux = RefreshToken.for_user(user)
+        access = str(refresh_aux.access_token)
+        refresh = str(refresh_aux)
+
+        access_token_lifetime = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
+        refresh_token_lifetime = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
+
+        response.set_cookie(
+            'accessToken',
+            access,
+            httponly=True,
+            secure=False,  # TODO MUDAR PARA TRUE EM PRODUÇÃO
+            samesite='Strict',
+            max_age=access_token_lifetime
+        )
+
+        response.set_cookie(
+            'refreshToken',
+            refresh,
+            httponly=True,
+            secure=False,  # TODO MUDAR PARA TRUE EM PRODUÇÃO
+            samesite='Strict',
+            max_age=refresh_token_lifetime
+        )
+
+        return response
     except CampoAusente as e:
         return Response({"erro": e.mensagem}, status=status.HTTP_400_BAD_REQUEST)
     except CredenciaisInvalidas as e:
@@ -48,6 +76,53 @@ def obter_token(request):
 
 
 @api_view(['POST'])
+@authentication_classes([NoAuthentication])
+@permission_classes([AllowAny])
+def refresh_token(request):
+    try:
+        refresh_token = request.COOKIES.get('refreshToken')
+
+        if not refresh_token:
+            raise AuthenticationFailed("Erro! Refresh token não encontrado nos cookies!")
+
+        response = Response({
+            "menssagem": "Tokens renovados com sucesso!"
+        }, status=status.HTTP_200_OK)
+
+        refresh = RefreshToken(refresh_token)
+        access_token = str(refresh.access_token)
+        novo_refresh_token = str(refresh)
+
+        access_token_lifetime = settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
+        refresh_token_lifetime = settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
+
+        response.set_cookie(
+            'accessToken',
+            access_token,
+            httponly=True,
+            secure=False,  # TODO MUDAR PARA TRUE EM PRODUÇÃO
+            samesite='Strict',
+            max_age=access_token_lifetime
+        )
+
+        response.set_cookie(
+            'refreshToken',
+            novo_refresh_token,
+            httponly=True,
+            secure=False,  # TODO MUDAR PARA TRUE EM PRODUÇÃO
+            samesite='Strict',
+            max_age=refresh_token_lifetime
+        )
+
+        return response
+    except AuthenticationFailed as e:
+        return Response({"erro": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+    except Exception as e:
+        return Response({"erro": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@authentication_classes([NoAuthentication])
 @permission_classes([AllowAny])
 def cadastrar_usuario(request):
     try:
@@ -69,12 +144,17 @@ def cadastrar_usuario(request):
     except IntegrityError:
         return Response({"erro": "Erro! Integridade inválida do banco de dados!"},
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except ValidationError as e:
+        erro = e.messages[0]
+        if erro.endswith('.'):
+            erro = erro[:-1] + '!'
+        return Response({"erro": f"Erro! {erro}"}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"erro": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
-@authentication_classes([JWTAuthentication])
+@authentication_classes([JWTCookieAuthentication])
 @permission_classes([IsAuthenticated])
 def visualizar_usuario(request):
     try:
@@ -97,7 +177,7 @@ def visualizar_usuario(request):
 
 
 @api_view(['PUT'])
-@authentication_classes([JWTAuthentication])
+@authentication_classes([JWTCookieAuthentication])
 @permission_classes([IsAuthenticated])
 def atualizar_usuario(request):
     try:
@@ -138,7 +218,7 @@ def atualizar_usuario(request):
 
 
 @api_view(['DELETE'])
-@authentication_classes([JWTAuthentication])
+@authentication_classes([JWTCookieAuthentication])
 @permission_classes([IsAuthenticated])
 def deletar_usuario(request):
     try:

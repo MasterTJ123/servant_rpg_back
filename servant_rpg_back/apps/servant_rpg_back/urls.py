@@ -1,11 +1,11 @@
 from django.urls import path
-from .views import cadastrar_usuario, deletar_usuario, atualizar_usuario, visualizar_usuario, obter_token
-from rest_framework_simplejwt.views import TokenRefreshView
+from .views import cadastrar_usuario, deletar_usuario, atualizar_usuario, visualizar_usuario, access_token, \
+    refresh_token
 
 urlpatterns = [
     # JWT
-    path('api/token', obter_token, name='obter_token'),
-    path('api/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/accesstoken', access_token, name='access_token'),
+    path('api/refreshtoken', refresh_token, name='refresh_token'),
     # Usuario
     path('cadastrarusuario', cadastrar_usuario, name='cadastrar_usuario'),
     path('visualizarusuario', visualizar_usuario, name='visualizar_usuario'),

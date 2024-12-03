@@ -1,7 +1,9 @@
-from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
-from django.db import models
-from django.contrib.auth.hashers import make_password
 from .erros import CampoAusente, EmailJaCadastrado
+from django.db import models
+from django.core.exceptions import ValidationError
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 
 
 class UsuarioManager(BaseUserManager):
@@ -16,6 +18,12 @@ class UsuarioManager(BaseUserManager):
         except Usuario.DoesNotExist:
             pass
         # TODO VERIFICAR SE A FORMATAÇÃO DO E-MAIL ESTÁ CORRETA
+        # Verifica se a senha é segura
+        try:
+            usuario_aux = Usuario(email=email, nome=nome, senha=senha)
+            validate_password(senha, usuario_aux)
+        except ValidationError as e:
+            raise ValidationError(e)
         # Cria o usuário
         email = self.normalize_email(email)
         user = self.model(email=email, nome=nome)
