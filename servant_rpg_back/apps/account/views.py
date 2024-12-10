@@ -40,11 +40,11 @@ class LoginView(APIView):
 
             response = Response({"detail": _("Login successful.")}, status=status.HTTP_200_OK)
             response.set_cookie(
-                key='refresh_token', value=str(refresh), httponly=True, secure=False, samesite='Lax',
+                key='refresh_token', value=str(refresh), httponly=True, secure=False, samesite='None',
                 max_age=refresh.lifetime
             )
             response.set_cookie(
-                key='access_token', value=str(access_token), httponly=True, secure=False, samesite='Lax',
+                key='access_token', value=str(access_token), httponly=True, secure=False, samesite='None',
                 max_age=access_token.lifetime
             )
 
