@@ -1,0 +1,15 @@
+# Django
+**/__pycache__/
+
+# JetBrains
+**/.idea/
+
+# Venv
+**/venv/
+
+# Env
+**.env
+
+# Certificados
+**/certificados/*
+!**/certificados/.gitkeep

@@ -1,6 +1,7 @@
 import os
-from pathlib import Path
 import environ
+from pathlib import Path
+from datetime import timedelta
 from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,17 +31,19 @@ LANGUAGES = [
     ('pt-br', _('Brazilian Portuguese')),
 ]
 
-LOCALE_PATHS = [
-    os.path.join(BASE_DIR, 'locale'),
-]
+LOCALE_PATHS = [ os.path.join(BASE_DIR, 'locale'), ]
 
 TIME_ZONE = 'UTC'
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(', ')
+
+CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
     # Django
@@ -50,6 +53,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # CORS
+    'corsheaders',
     # Rest
     'rest_framework',
     'rest_framework_simplejwt',
@@ -116,3 +121,14 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=float(os.getenv('ACCESS_TOKEN_LIFETIME_MINUTES'))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=float(os.getenv('REFRESH_TOKEN_LIFETIME_DAYS'))),
+}

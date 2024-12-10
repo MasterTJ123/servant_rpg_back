@@ -1,13 +1,13 @@
-from rest_framework.exceptions import ValidationError, NotFound
+from .models import CustomUser
+from .serializers import CustomUserSerializer
+from .permissions import IsOwnerUserOrIsAdminUser
+from rest_framework import viewsets, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUser
-from rest_framework import viewsets, status
-from .serializers import CustomUserSerializer
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
-from .permissions import IsOwnerUserOrIsAdminUser
+from rest_framework.status import HTTP_200_OK
 from django.utils.translation import gettext_lazy as _
 
 
@@ -54,11 +54,10 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
-    # noinspection PyMethodMayBeStatic
-    def post(self):
-        # Remover os cookies de tokens
+    # noinspection PyMethodMayBeStatic, PyUnusedLocal
+    def post(self, request):
         response = Response({"detail": _("Logged out.")}, status=status.HTTP_200_OK)
         response.delete_cookie('refresh_token')
         response.delete_cookie('access_token')
@@ -67,7 +66,7 @@ class LogoutView(APIView):
 
 
 class RefreshView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     # noinspection PyMethodMayBeStatic
     def post(self, request):
@@ -102,15 +101,18 @@ class CustomUserViewSet(viewsets.ModelViewSet):
             permission_classes = [IsAuthenticated, IsOwnerUserOrIsAdminUser]
         return [permission() for permission in permission_classes]
 
-    def get_authenticators(self):
-        if self.action not in ('create', 'list'):
-            return [JWTAuthentication()]
-        return []
-
     def list(self, request, *args, **kwargs):
         if IsAuthenticated().has_permission(request, self) and IsAdminUser().has_permission(request, self):
             queryset = self.get_queryset()
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
+            return Response(serializer.data, status=HTTP_200_OK)
         else:
             return Response([])
+
+    def destroy(self, request, *args, **kwargs):
+        response = super().destroy(request, *args, **kwargs)
+
+        response.delete_cookie('refresh_token')
+        response.delete_cookie('access_token')
+
+        return response
