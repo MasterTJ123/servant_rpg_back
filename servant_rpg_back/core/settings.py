@@ -31,7 +31,7 @@ LANGUAGES = [
     ('pt-br', _('Brazilian Portuguese')),
 ]
 
-LOCALE_PATHS = [ os.path.join(BASE_DIR, 'locale'), ]
+LOCALE_PATHS = [os.path.join(BASE_DIR, 'locale'), ]
 
 TIME_ZONE = 'UTC'
 
@@ -43,7 +43,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(', ')
 
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = bool(os.getenv('CORS_ALLOW_CREDENTIALS'))
+
+CORS_ORIGIN_ALLOW_ALL = bool(os.getenv('CORS_ORIGIN_ALLOW_ALL'))
 
 INSTALLED_APPS = [
     # Django

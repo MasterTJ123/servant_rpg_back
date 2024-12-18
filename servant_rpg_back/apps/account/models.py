@@ -20,40 +20,51 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = ["username", "first_name", "last_name"]  # Other fields are required by default
 
 
-class Combatente(models.Model):
-    nome = models.CharField(max_length=100)
-    nivel = models.PositiveIntegerField()
-    classe = models.CharField(max_length=100)
-    familia = models.CharField(max_length=100)
-    vida = models.PositiveIntegerField()
-    armadura = models.PositiveIntegerField()
-    iniciativa = models.PositiveIntegerField()
-    spell_slots = models.PositiveIntegerField()
-    prof_armas = models.PositiveIntegerField()
-    prof_magica = models.PositiveIntegerField()
-    tamanho = models.PositiveIntegerField()
-    traits = models.CharField(max_length=100)
-    incluir_gerativo = models.BooleanField()
+class Combatant(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
+                             null=True, blank=True)  # Set to null if include_generative is True
+    name = models.CharField(max_length=100, null=False, blank=False)
+    level = models.PositiveIntegerField(null=False, blank=False)
+    choosen_class = models.CharField(max_length=100, null=False, blank=False)
+    family = models.CharField(max_length=100, null=False, blank=False)
+    life = models.PositiveIntegerField(null=False, blank=False)
+    armor = models.PositiveIntegerField(null=False, blank=False)
+    initiative = models.PositiveIntegerField(null=False, blank=False)
+    spell_slots = models.TextField(null=False, blank=False)
+    weapon_proficiency = models.PositiveIntegerField(null=False, blank=False)
+    magic_proficiency = models.PositiveIntegerField(null=False, blank=False)
+    size = models.PositiveIntegerField(null=False, blank=False)
+    traits = models.TextField(null=False, blank=False)
+    include_generative = models.BooleanField(null=False, blank=False)
 
 
-class Grupo(models.Model):
-    nome = models.CharField(max_length=100)
+class Group(models.Model):
+    name = models.CharField(max_length=100, null=False, blank=False)
+    campaign = models.CharField(max_length=100, null=False, blank=False)
 
 
-class CombatenteGrupo(models.Model):
-    combatente = models.ForeignKey(Combatente, on_delete=models.CASCADE)
-    grupo = models.ForeignKey(Grupo, on_delete=models.CASCADE)
-    entrada_grupo = models.DateField()
-    saida_grupo = models.DateField()
+class CombatantGroup(models.Model):
+    combatant = models.ForeignKey(Combatant, on_delete=models.CASCADE, null=False, blank=False)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=False, blank=False)
+    group_entry = models.DateField(null=False, blank=False)
+    group_exit = models.DateField(null=False, blank=False)
 
 
-class Encontro(models.Model):
-    grupo = models.ForeignKey(Grupo, on_delete=models.CASCADE)
-    inicio = models.DateField()
-    fim = models.DateField()
-    historico_turnos = models.TextField()
+class Encounter(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=False, blank=False)
+    start = models.DateField(null=False, blank=False)
+    end = models.DateField(null=False, blank=False)
+    turn_history = models.TextField(null=False, blank=False)
 
 
-class InimigoEncontro(models.Model):
-    combatente = models.ForeignKey(Combatente, on_delete=models.CASCADE)
-    encontro = models.ForeignKey(Encontro, on_delete=models.CASCADE)
+class EnemyEncounter(models.Model):
+    combatant = models.ForeignKey(Combatant, on_delete=models.CASCADE, null=False, blank=False)
+    encounter = models.ForeignKey(Encounter, on_delete=models.CASCADE, null=False, blank=False)
+
+
+class Ambient(models.Model):
+    combatant = models.ForeignKey(Combatant, on_delete=models.CASCADE, null=False, blank=False)
+    encounter = models.ForeignKey(Encounter, on_delete=models.CASCADE, null=False, blank=False)
+    name = models.CharField(max_length=100, null=False, blank=False)
+    families = models.TextField(null=False, blank=False)
+    characteristics = models.TextField(null=False, blank=False)

@@ -1,6 +1,7 @@
-from .models import CustomUser
-from .serializers import CustomUserSerializer
-from .permissions import IsOwnerUserOrIsAdminUser
+from .models import CustomUser, Combatant, CombatantGroup, Group, Ambient
+from .serializers import CustomUserSerializer, CombatantSerializer, AmbientSerializer, GroupSerializer, \
+    CombatantGroupSerializer
+from .permissions import IsOwnerUser
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -40,11 +41,11 @@ class LoginView(APIView):
 
             response = Response({"detail": _("Login successful.")}, status=status.HTTP_200_OK)
             response.set_cookie(
-                key='refresh_token', value=str(refresh), httponly=True, secure=False, samesite='None',
+                key='refresh_token', value=str(refresh), httponly=True, secure=False, samesite=None,
                 max_age=refresh.lifetime
             )
             response.set_cookie(
-                key='access_token', value=str(access_token), httponly=True, secure=False, samesite='None',
+                key='access_token', value=str(access_token), httponly=True, secure=False, samesite=None,
                 max_age=access_token.lifetime
             )
 
@@ -61,7 +62,6 @@ class LogoutView(APIView):
         response = Response({"detail": _("Logged out.")}, status=status.HTTP_200_OK)
         response.delete_cookie('refresh_token')
         response.delete_cookie('access_token')
-
         return response
 
 
@@ -81,7 +81,7 @@ class RefreshView(APIView):
 
             response = Response({"detail": _("Token refreshed.")}, status=status.HTTP_200_OK)
             response.set_cookie(
-                key='access_token', value=str(access_token), httponly=True, secure=False, samesite='Lax',
+                key='access_token', value=str(access_token), httponly=True, secure=False, samesite=None,
                 max_age=access_token.lifetime
             )
 
@@ -98,21 +98,108 @@ class CustomUserViewSet(viewsets.ModelViewSet):
         if self.action in ('create', 'list'):
             permission_classes = [AllowAny]
         else:
-            permission_classes = [IsAuthenticated, IsOwnerUserOrIsAdminUser]
+            permission_classes = [IsAuthenticated & (IsOwnerUser | IsAdminUser)]
         return [permission() for permission in permission_classes]
 
     def list(self, request, *args, **kwargs):
-        if IsAuthenticated().has_permission(request, self) and IsAdminUser().has_permission(request, self):
-            queryset = self.get_queryset()
+        if IsAuthenticated().has_permission(request, self):
+            if IsAdminUser().has_permission(request, self):
+                queryset = self.get_queryset()
+            else:
+                queryset = self.get_queryset().get(id=request.user.id)
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=HTTP_200_OK)
         else:
-            return Response([])
+            return Response([], status=HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)
-
         response.delete_cookie('refresh_token')
         response.delete_cookie('access_token')
-
         return response
+
+
+class CombatantViewSet(viewsets.ModelViewSet):
+    queryset = Combatant.objects.all()
+    serializer_class = CombatantSerializer
+
+    def get_permissions(self):
+        if self.action in ('create', 'list'):
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated & (IsOwnerUser | IsAdminUser)]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        if IsAuthenticated().has_permission(request, self):
+            if IsAdminUser().has_permission(request, self):
+                queryset = self.get_queryset()
+            else:
+                queryset = self.get_queryset().filter(user=request.user)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=HTTP_200_OK)
+
+
+class CombatantGroupViewSet(viewsets.ModelViewSet):
+    queryset = CombatantGroup.objects.all()
+    serializer_class = CombatantGroupSerializer
+
+    def get_permissions(self):
+        if self.action in ('create', 'list'):
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated & (IsOwnerUser | IsAdminUser)]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        if IsAuthenticated().has_permission(request, self):
+            if IsAdminUser().has_permission(request, self):
+                queryset = self.get_queryset()
+            else:
+                queryset = self.get_queryset().filter(combatant__user=request.user)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=HTTP_200_OK)
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+
+    def get_permissions(self):
+        if self.action in ('create', 'list'):
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated & (IsOwnerUser | IsAdminUser)]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        if IsAuthenticated().has_permission(request, self):
+            if IsAdminUser().has_permission(request, self):
+                queryset = self.get_queryset()
+            else:
+                group_ids = (CombatantGroup.objects.filter(combatant__user=request.user)
+                             .values_list('group', flat=True).distinct())
+                queryset = self.get_queryset().filter(id__in=group_ids)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=HTTP_200_OK)
+
+
+class AmbientViewSet(viewsets.ModelViewSet):
+    queryset = Ambient.objects.all()
+    serializer_class = AmbientSerializer
+
+    def get_permissions(self):
+        if self.action in ('create', 'list'):
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated & (IsOwnerUser | IsAdminUser)]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        if IsAuthenticated().has_permission(request, self):
+            if IsAdminUser().has_permission(request, self):
+                queryset = self.get_queryset()
+            else:
+                queryset = self.get_queryset().filter(combatant__user=request.user)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=HTTP_200_OK)
