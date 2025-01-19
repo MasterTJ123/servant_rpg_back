@@ -7,8 +7,8 @@ router = DefaultRouter()
 router.register('users', CustomUserViewSet)
 router.register('combatants', CombatantViewSet)
 router.register('combatants-groups', CombatantGroupViewSet)
-router.register('group', GroupViewSet)
-router.register('ambient', AmbientViewSet)
+router.register('groups', GroupViewSet)
+router.register('ambients', AmbientViewSet)
 
 urlpatterns = [
     # Users
