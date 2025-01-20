@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
                 ('size', models.PositiveIntegerField()),
                 ('traits', models.TextField()),
                 ('include_generative', models.BooleanField()),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(blank=False, null=False, on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.CreateModel(
