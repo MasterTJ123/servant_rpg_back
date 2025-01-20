@@ -31,19 +31,33 @@ class CustomUserSerializer(serializers.ModelSerializer):
             user.save()
         return user
 
+# #ChatGPT falou que isso daqui ta dando problema
+# class CombatantSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Combatant
+#         fields = '__all__'
+#         extra_kwargs = {
+#             'user': {'read_only': True},
+#         }
 
+#     def create(self, data):
+#         include_generative = data.get('include_generative', False) #Acho que era isso daqui que tava dando erro, quando marcava o check
+#         data['user'] = None if include_generative else self.context['request'].user
+#         return super().create(data)
+
+#e mandou fazer isso
 class CombatantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Combatant
         fields = '__all__'
         extra_kwargs = {
-            'user': {'read_only': True},
+            'user': {'read_only': True},  # Prevent the user from being explicitly set via request
         }
 
-    def create(self, data):
-        include_generative = data.get('include_generative', False)
-        data['user'] = None if include_generative else self.context['request'].user
-        return super().create(data)
+    def create(self, validated_data):
+        # Use self.context['request'].user to set the user, ensuring it's always passed to the serializer
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
 
 
 class CombatantGroupSerializer(serializers.ModelSerializer):

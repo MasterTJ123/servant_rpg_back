@@ -129,6 +129,11 @@ class CombatantViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [IsAuthenticated & (IsOwnerUser | IsAdminUser)]
         return [permission() for permission in permission_classes]
+    
+    #Feito com o chatGPT
+    def perform_create(self, serializer):
+        # Automatically associate the authenticated user
+        serializer.save(user=self.request.user)
 
     def list(self, request, *args, **kwargs):
         if IsAuthenticated().has_permission(request, self):
