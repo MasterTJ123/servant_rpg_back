@@ -1,6 +1,6 @@
-from .models import CustomUser, Combatant, CombatantGroup, Group, Ambient
+from .models import CustomUser, Combatant, CombatantGroup, Group, Ambient, Encounter, EnemyEncounter
 from .serializers import CustomUserSerializer, CombatantSerializer, AmbientSerializer, GroupSerializer, \
-    CombatantGroupSerializer
+    CombatantGroupSerializer, EncounterSerializer, EnemyEncounterSerializer
 from .permissions import IsOwnerUser
 from rest_framework import viewsets, status
 from rest_framework.exceptions import ValidationError
@@ -145,6 +145,29 @@ class CombatantViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=HTTP_200_OK)
 
 
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all()
+    serializer_class = GroupSerializer
+
+    def get_permissions(self):
+        if self.action in ('create', 'list'):
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated & (IsOwnerUser | IsAdminUser)]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        if IsAuthenticated().has_permission(request, self):
+            if IsAdminUser().has_permission(request, self):
+                queryset = self.get_queryset()
+            else:
+                group_ids = (CombatantGroup.objects.filter(combatant__user=request.user)
+                             .values_list('group', flat=True).distinct())
+                queryset = self.get_queryset().filter(id__in=group_ids)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=HTTP_200_OK)
+
+
 class CombatantGroupViewSet(viewsets.ModelViewSet):
     queryset = CombatantGroup.objects.all()
     serializer_class = CombatantGroupSerializer
@@ -166,9 +189,9 @@ class CombatantGroupViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=HTTP_200_OK)
 
 
-class GroupViewSet(viewsets.ModelViewSet):
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+class EncounterViewSet(viewsets.ModelViewSet):
+    queryset = Encounter.objects.all()
+    serializer_class = EncounterSerializer
 
     def get_permissions(self):
         if self.action in ('create', 'list'):
@@ -182,9 +205,28 @@ class GroupViewSet(viewsets.ModelViewSet):
             if IsAdminUser().has_permission(request, self):
                 queryset = self.get_queryset()
             else:
-                group_ids = (CombatantGroup.objects.filter(combatant__user=request.user)
-                             .values_list('group', flat=True).distinct())
-                queryset = self.get_queryset().filter(id__in=group_ids)
+                queryset = self.get_queryset().filter(combatant__user=request.user)  # TODO MUDAR
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=HTTP_200_OK)
+
+
+class EnemyEncounterViewSet(viewsets.ModelViewSet):
+    queryset = EnemyEncounter.objects.all()
+    serializer_class = EnemyEncounterSerializer
+
+    def get_permissions(self):
+        if self.action in ('create', 'list'):
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAuthenticated & (IsOwnerUser | IsAdminUser)]
+        return [permission() for permission in permission_classes]
+
+    def list(self, request, *args, **kwargs):
+        if IsAuthenticated().has_permission(request, self):
+            if IsAdminUser().has_permission(request, self):
+                queryset = self.get_queryset()
+            else:
+                queryset = self.get_queryset().filter(combatant__user=request.user)  # TODO MUDAR
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=HTTP_200_OK)
 

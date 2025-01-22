@@ -1,13 +1,15 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import CustomUserViewSet, LoginView, LogoutView, RefreshView, CombatantViewSet, CombatantGroupViewSet, \
-    GroupViewSet, AmbientViewSet
+    GroupViewSet, AmbientViewSet, EncounterViewSet, EnemyEncounterViewSet
 
 router = DefaultRouter()
 router.register('users', CustomUserViewSet)
 router.register('combatants', CombatantViewSet)
-router.register('combatants-groups', CombatantGroupViewSet)
 router.register('groups', GroupViewSet)
+router.register('combatants-groups', CombatantGroupViewSet)
+router.register('encounters', EncounterViewSet)
+router.register('enemies-encounters', EnemyEncounterViewSet)
 router.register('ambients', AmbientViewSet)
 
 urlpatterns = [

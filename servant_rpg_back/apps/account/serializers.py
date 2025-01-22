@@ -1,4 +1,4 @@
-from .models import CustomUser, Combatant, CombatantGroup, Group, Ambient
+from .models import CustomUser, Combatant, CombatantGroup, Group, Ambient, Encounter, EnemyEncounter
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 
@@ -60,15 +60,27 @@ class CombatantSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = '__all__'
+
+
 class CombatantGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = CombatantGroup
         fields = '__all__'
 
 
-class GroupSerializer(serializers.ModelSerializer):
+class EncounterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Group
+        model = Encounter
+        fields = '__all__'
+
+
+class EnemyEncounterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EnemyEncounter
         fields = '__all__'
 
 
