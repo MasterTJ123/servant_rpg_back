@@ -22,7 +22,7 @@ class CustomUser(AbstractUser):
 
 class Combatant(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
-                             null=True, blank=True)  # Set to null if include_generative is True
+                             null=False, blank=False)  # Set to null if include_generative is True
     name = models.CharField(max_length=100, null=False, blank=False)
     level = models.PositiveIntegerField(null=False, blank=False)
     choosen_class = models.CharField(max_length=100, null=False, blank=False)
@@ -40,7 +40,7 @@ class Combatant(models.Model):
 
 class Group(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
-                             null=True, blank=True) 
+                             null=False, blank=False) 
     name = models.CharField(max_length=100, null=False, blank=False)
     campaign = models.CharField(max_length=100, null=False, blank=False)
 
@@ -51,11 +51,18 @@ class CombatantGroup(models.Model):
     group_entry = models.DateField(null=False, blank=False)
     group_exit = models.DateField(null=False, blank=False)
 
+class Ambient(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
+                             null=False, blank=False)     
+    name = models.CharField(max_length=100, null=False, blank=False)
+    families = models.TextField(null=False, blank=False)
+    characteristics = models.TextField(null=False, blank=False)
 
 class Encounter(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
-                             null=True, blank=True) 
+                             null=False, blank=False) 
     group = models.ForeignKey(Group, on_delete=models.CASCADE, null=False, blank=False)
+    ambient = models.ForeignKey(Ambient, on_delete=models.CASCADE, null=True, blank=True)
     start = models.DateField(null=False, blank=False)
     end = models.DateField(null=False, blank=False)
     turn_history = models.TextField(null=False, blank=False)
@@ -64,13 +71,3 @@ class Encounter(models.Model):
 class EnemyEncounter(models.Model):
     combatant = models.ForeignKey(Combatant, on_delete=models.CASCADE, null=False, blank=False)
     encounter = models.ForeignKey(Encounter, on_delete=models.CASCADE, null=False, blank=False)
-
-
-class Ambient(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
-                             null=True, blank=True) 
-    combatant = models.ForeignKey(Combatant, on_delete=models.CASCADE, null=False, blank=False)
-    encounter = models.ForeignKey(Encounter, on_delete=models.CASCADE, null=False, blank=False)
-    name = models.CharField(max_length=100, null=False, blank=False)
-    families = models.TextField(null=False, blank=False)
-    characteristics = models.TextField(null=False, blank=False)
