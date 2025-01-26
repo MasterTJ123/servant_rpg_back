@@ -112,6 +112,21 @@ TEMPLATES = [
     },
 ]
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': os.getenv('ENGINE'),
+#         'NAME': os.getenv('NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('PASSWORD'),
+#         'HOST': os.getenv('HOST'),
+#         'PORT': os.getenv('PORT'),
+#         'OPTIONS': {
+#             'sslmode': 'verify-full',
+#             'sslrootcert': os.getenv('DB_CERTIFICADO'),
+#         },
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('ENGINE'),
@@ -120,10 +135,7 @@ DATABASES = {
         'PASSWORD': os.getenv('PASSWORD'),
         'HOST': os.getenv('HOST'),
         'PORT': os.getenv('PORT'),
-        'OPTIONS': {
-            'sslmode': 'verify-full',
-            'sslrootcert': os.getenv('DB_CERTIFICADO'),
-        },
+        
     }
 }
 

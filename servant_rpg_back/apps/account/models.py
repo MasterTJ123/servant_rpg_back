@@ -39,6 +39,8 @@ class Combatant(models.Model):
 
 
 class Group(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
+                             null=True, blank=True) 
     name = models.CharField(max_length=100, null=False, blank=False)
     campaign = models.CharField(max_length=100, null=False, blank=False)
 
@@ -51,6 +53,8 @@ class CombatantGroup(models.Model):
 
 
 class Encounter(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
+                             null=True, blank=True) 
     group = models.ForeignKey(Group, on_delete=models.CASCADE, null=False, blank=False)
     start = models.DateField(null=False, blank=False)
     end = models.DateField(null=False, blank=False)
@@ -63,6 +67,8 @@ class EnemyEncounter(models.Model):
 
 
 class Ambient(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
+                             null=True, blank=True) 
     combatant = models.ForeignKey(Combatant, on_delete=models.CASCADE, null=False, blank=False)
     encounter = models.ForeignKey(Encounter, on_delete=models.CASCADE, null=False, blank=False)
     name = models.CharField(max_length=100, null=False, blank=False)

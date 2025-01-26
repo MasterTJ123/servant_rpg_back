@@ -1,0 +1,23 @@
+#env para conectar ao TEMBO
+# Banco de dados
+ENGINE='django.db.backends.postgresql'
+NAME='postgres'
+DB_USER='evaldo_souza'
+PASSWORD='d@DVD;U>=Xz(qeH]so1G0;8I9;2$U#2[jh:3D)Dk9rM"3[=Uo5'
+HOST='moodily-spruce-bream.data-1.use1.tembo.io'
+PORT='5432'
+DB_CERTIFICADO='../certificados/tembo-servant-rpg.crt'
+
+# Django
+SECRET_KEY='KFTt3X!c#"d55D)G23d:.=tW;!w:H;[%e6$T%s=mI(uKiHPTLc'
+DEBUG='True'
+ALLOWED_HOSTS='localhost, 127.0.0.1'
+
+# CORS
+CORS_ALLOWED_ORIGINS='http://localhost:3000, http://127.0.0.1:3000'
+CORS_ALLOW_CREDENTIALS='True'
+CORS_ORIGIN_ALLOW_ALL='False'
+
+# JWT
+ACCESS_TOKEN_LIFETIME_MINUTES='60'
+REFRESH_TOKEN_LIFETIME_DAYS='1'
