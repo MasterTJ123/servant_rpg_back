@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from .models import CustomUser, Combatant, CombatantGroup, Group, Ambient, Encounter, EnemyEncounter
 from .serializers import CustomUserSerializer, CombatantSerializer, AmbientSerializer, GroupSerializer, \
     CombatantGroupSerializer, EncounterSerializer, EnemyEncounterSerializer
@@ -9,6 +10,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.status import HTTP_200_OK
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django.utils.translation import gettext_lazy as _
 
 
@@ -171,6 +174,20 @@ class GroupViewSet(viewsets.ModelViewSet):
                 queryset = self.get_queryset().filter(id__in=group_ids)
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=HTTP_200_OK)
+    
+    #adicionando a habilidade de pegar os combatentes, nao sei se eh o lugar certo
+    
+    @action(detail=True, methods=['get'], url_path='combatants')
+    def get_combatant_ids(self, request, pk=None):
+        try:
+            # Query the combatant IDs related to the given group ID
+            combatant_groups = CombatantGroup.objects.filter(group_id=pk)
+            combatant_ids = list(combatant_groups.values_list('combatant_id', flat=True))
+
+            # Return the response as JSON
+            return Response({'group_id': pk, 'combatant_ids': combatant_ids}, status=200)
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
 
 
 class CombatantGroupViewSet(viewsets.ModelViewSet):
