@@ -1,0 +1,19 @@
+{
+  "classes": [
+    {"id": 1, "name": "Alquimista"},
+    {"id": 2, "name": "Bárbaro"},
+    {"id": 3, "name": "Bardo"},
+    {"id": 4, "name": "Bruxo"},
+    {"id": 5, "name": "Clérigo"},
+    {"id": 6, "name": "Druida"},
+    {"id": 7, "name": "Feiticeiro"},
+    {"id": 8, "name": "Guerreiro"},
+    {"id": 9, "name": "Inventor"},
+    {"id": 10, "name": "Ladino"},
+    {"id": 11, "name": "Mago"},
+    {"id": 12, "name": "Monge"},
+    {"id": 13, "name": "Paladino"},
+    {"id": 14, "name": "Patrulheiro"},
+    {"id": 15, "name": "Xamã"}
+  ]
+}
