@@ -3,8 +3,23 @@
 
 
 #primeira passada pelo DeepSeek
+import random
 from typing import List, Dict, Optional
 import json
+
+from encounter_templates import *
+
+xp_costs = {
+    -4: 10,   # Low-threat lackey
+    -3: 15,   # Low- or moderate-threat lackey
+    -2: 20,   # Any lackey or standard creature
+    -1: 30,   # Any standard creature
+     0: 40,   # Any standard creature or low-threat boss
+     1: 60,   # Low- or moderate-threat boss
+     2: 80,   # Moderate- or severe-threat boss
+     3: 120,  # Severe- or extreme-threat boss
+     4: 160   # Extreme-threat solo boss
+}
 
 def generate_encounter(
     party_level: int,
@@ -78,6 +93,10 @@ def calculate_xp_budget( party_size: int, difficulty: str) -> int:
     #4 eh o tamanho padrao da party, a conta e feita em volta disso
     xp_budget = base_xp - ((4 - party_size) * character_adjustment)
 
+    #pra nao ter chance de retornar menos que 10 com parties muito pequenas
+    if xp_budget < 10:
+        return 10
+
     return xp_budget
 
 
@@ -109,6 +128,13 @@ def apply_filters(monster_data: List[Dict], filters: Optional[Dict]) -> List[Dic
     return filtered_monsters
 
 
+def get_max_level_diff(xp_budget):
+    # Determine the maximum level difference based on the XP budget
+    for level_diff in sorted(xp_costs.keys(), reverse=True):
+        if xp_costs[level_diff] <= xp_budget:
+            return level_diff
+    return -4  # Default to the lowest level difference if budget is very low
+
 def select_monsters(filtered_monsters: List[Dict], xp_budget: int, party_level: int) -> List[Dict]:
     """
     Selects monsters that fit within the XP budget.
@@ -128,36 +154,48 @@ def select_monsters(filtered_monsters: List[Dict], xp_budget: int, party_level: 
     sorted_monsters = sorted(filtered_monsters, key=lambda x: x["level"])
 
     lower_bound = party_level - 4
-    upper_bound = party_level + 4
+    upper_bound = party_level + 4 #A lista fa
     bounded_monsters = [monster for monster in sorted_monsters if lower_bound <= int(monster['level']) <= upper_bound]
 
     #bounded_monsters possui os monstros dentro do limite  recomendado, selecionados por tipo
     #agora, como que eu escolho isso?
     #primeira coisa, a tabela de custos!
-
-    monster_cost = [
-    {"level_difference": -4, "xp_cost": 10, "threat_description": "Low-threat lackey"},
-    {"level_difference": -3, "xp_cost": 15, "threat_description": "Low- or moderate-threat lackey"},
-    {"level_difference": -2, "xp_cost": 20, "threat_description": "Any lackey or standard creature"},
-    {"level_difference": -1, "xp_cost": 30, "threat_description": "Any standard creature"},
-    {"level_difference": 0, "xp_cost": 40, "threat_description": "Any standard creature or low-threat boss"},
-    {"level_difference": +1, "xp_cost": 60, "threat_description": "Low- or moderate-threat boss"},
-    {"level_difference": +2, "xp_cost": 80, "threat_description": "Moderate- or severe-threat boss"},
-    {"level_difference": +3, "xp_cost": 120, "threat_description": "Severe- or extreme-threat boss"},
-    {"level_difference": +4, "xp_cost": 160, "threat_description": "Extreme-threat solo boss"},
-    ]
-
-    # for monster in bounded_monsters:
-    #     print("Nivel do monstro", monster['name'], ":", monster['level'])
-
     #bounded_monsters esta ordenada por nivel
+    #pego os monstros que a xp permite, e o que o template determina
+    #se sobrou XP, 
     
-    for monster in bounded_monsters:
-        if monster["xp"] <= remaining_budget:
-            selected_monsters.append(monster)
-            remaining_budget -= monster["xp"]
+    encounter_types = [
+    "Single Boss",
+    "Boss and Lieutenant",
+    "Elite Enemies",
+    "Lieutenant and Lackeys",
+    "Mated Pair",
+    "Troop",
+    "Mook Squad"
+]
+    selected_encounter_type = random.choice(encounter_types)
 
-    return selected_monsters
+    #Ta funcionando, agora preciso refinar para escolher as versões enfraquecidas ou elites também
+
+    print("TEMPLATE DO ENCONTRO: ", selected_encounter_type)
+    if selected_encounter_type == "Boss and Lieutenant":
+        return select_boss_and_lieutenant(bounded_monsters, party_level, xp_budget)
+    elif selected_encounter_type == "Elite Enemies":
+        return select_elite_enemies(bounded_monsters, party_level, xp_budget)
+    elif selected_encounter_type == "Lieutenant and Lackeys":
+        return select_lieutenant_and_lackeys(bounded_monsters, party_level, xp_budget)
+    elif selected_encounter_type == "Mated Pair":
+        return select_mated_pair(bounded_monsters, party_level, xp_budget)
+    elif selected_encounter_type == "Troop":
+        return select_troop(bounded_monsters, party_level, xp_budget)
+    elif selected_encounter_type == "Mook Squad":
+        return select_mook_squad(bounded_monsters, party_level, xp_budget)
+    elif selected_encounter_type == "Single Boss":
+        return single_boss(bounded_monsters, party_level+3)
+    else:
+        print(f"Unknown encounter type: {selected_encounter_type}")
+        return {"monsters": []}
+
 
 
 def get_monsters():
